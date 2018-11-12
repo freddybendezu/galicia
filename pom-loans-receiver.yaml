@@ -1,0 +1,204 @@
+---
+openapi: 3.0.2
+info:
+  title: pom-loans-receiver
+  description: API to serve an overview of any type of loan
+  version: 1.0.0
+paths:
+  /v1/pom/loans:
+    description: |-
+      Se solicitan todos los overview de prestamos en base a su estado.
+      Dispara una operación asincrónica.
+    get:
+      parameters:
+      - name: status
+        in: query
+        description: |-
+          Possible status of the loan overview.
+
+          Some examples could be "Simulado", "Instrumentado", "Solicitado"
+        required: true
+        schema:
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: Operation succeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_ok_async'
+        500:
+          description: An error has ocurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_error'
+  /v1/pom/loans/status/{operation_id}:
+    description: Poll URL para conocer si una operacion finalizó. Dependiendo el estado
+      de la operación podrán venir resultados o no.
+    get:
+      responses:
+        200:
+          description: Operation succeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_ok_async'
+        404:
+          description: Operation not found
+          content:
+            application/json: {}
+        500:
+          description: An error has ocurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_error'
+    parameters:
+    - name: operation_id
+      in: path
+      description: Identifier of an async operation
+      required: true
+      schema:
+        type: number
+  /v1/pom/loans/{loan_id}:
+    description: Conocer detalles de un préstamo en particular. Dependiendo su estado,
+      podrá devolver una simulación, solicitud, preacuerdo o tenencia.
+    get:
+      parameters:
+      - name: loan_id
+        in: path
+        description: Unique identifier of a loan in Omnichannel Platform
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Operation succeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_ok'
+        404:
+          description: Resource not found
+          content:
+            application/json: {}
+        500:
+          description: An internal error has ocurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_error'
+  /v1/pom/loans/{loan_id}/installments:
+    description: Conocer las cuotas pertenecientes a un préstamo, aplicable únicamente
+      al modelo de tenencia.
+    get:
+      parameters:
+      - name: loan_id
+        in: path
+        description: Unique identifier of a loan in Omnichannel Platform
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Operation succeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_ok'
+        404:
+          description: Resource not found
+          content:
+            application/json: {}
+        500:
+          description: An error has ocurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response_error'
+components:
+  schemas:
+    metadata:
+      title: Root Type for metadata
+      description: Commons metadata for all responses
+      required:
+      - method
+      - operation
+      type: object
+      properties:
+        method:
+          type: string
+        operation:
+          type: string
+        paging:
+          type: object
+      example: |-
+        {
+            "method": "GET",
+            "operation": "/v1/pom/loans?status=[Solicitado, Instrumentado]",
+            "paging": null
+        }
+    response_error:
+      title: Root Type for response_error
+      description: Response for error cases
+      required:
+      - errors
+      - meta
+      type: object
+      properties:
+        meta:
+          $ref: '#/components/schemas/metadata'
+        errors:
+          type: array
+          items: {}
+      example: |-
+        {
+            "meta": {},
+            "errors": [
+                {
+                    "code": "ERR-111",
+                    "detail": "Invalid attribute 'event_source'"
+                },
+                {
+                    "code": "ERR-112",
+                    "detail": "Parameter 'event_type' is required"
+                }
+            ]
+        }
+    response_ok_async:
+      title: Root Type for response_ok
+      description: Response with no errors
+      required:
+      - data
+      - meta
+      type: object
+      properties:
+        meta:
+          $ref: '#/components/schemas/metadata'
+        data:
+          type: array
+          items: {}
+      example: "{\n    \"meta\": {},\n    \"data\": [\n        {\n            \"operation_id\"\
+        : 12323,\n            \"status\": \"open\",        \n            \"results\"\
+        : []\n        }\n    ]\n}"
+    response_ok:
+      title: Root Type for response_ok
+      description: Common generic response
+      required:
+      - meta
+      - data
+      type: object
+      properties:
+        meta:
+          $ref: '#/components/schemas/metadata'
+        data:
+          type: array
+          items: {}
+      example: |-
+        {
+            "meta": {},
+            "data": []
+        }
