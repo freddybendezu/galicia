@@ -1,5 +1,5 @@
 ---
-openapi: 3.0.2
+swagger: "2.0"
 info:
   title: pom-loans-receiver
   description: API to serve an overview of any type of loan
